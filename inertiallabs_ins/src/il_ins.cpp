@@ -1,14 +1,14 @@
-#include<iostream>
-#include<unistd.h>
-#include<math.h>
-#include<stdlib.h>
+#include <iostream>
+#include <unistd.h>
+#include <math.h>
+#include <stdlib.h>
 
 #include "rclcpp/rclcpp.hpp"
 
-//Inertial Labs source header
+// Inertial Labs source header
 #include "ILDriver.h"
 
-//adding message type headers
+// adding message type headers
 #include "inertiallabs_msgs/msg/sensor_data.hpp"
 #include "inertiallabs_msgs/msg/ins_data.hpp"
 #include "inertiallabs_msgs/msg/gps_data.hpp"
@@ -19,21 +19,22 @@
 
 #include "ilins.h"
 
-il_ins::il_ins(): Node("il_ins"){ 
-	publishers0 = this->create_publisher<inertiallabs_msgs::msg::SensorData>("/Inertial_Labs/sensor_data",1);
-    publishers1 = this->create_publisher<inertiallabs_msgs::msg::InsData>("/Inertial_Labs/ins_data",1);
-    publishers2 = this->create_publisher<inertiallabs_msgs::msg::GpsData>("/Inertial_Labs/gps_data",1);
-    publishers3 = this->create_publisher<inertiallabs_msgs::msg::GnssData>("/Inertial_Labs/gnss_data",1);
-    publishers4 = this->create_publisher<inertiallabs_msgs::msg::MarineData>("/Inertial_Labs/marine_data",1);
-    // publishers6 = this->create_publisher<TODO>("/imu_raw",1)
-	publishers5 = this->create_publisher<sensor_msgs::msg::Imu>("/imu_raw",1);
-}
-il_ins::~il_ins(){}
-
-void publish_device(IL::INSDataStruct *data, il_ins* contextPtr)
+il_ins::il_ins() : Node("il_ins")
 {
-	il_ins * context = reinterpret_cast<il_ins*>(contextPtr);
-	static int seq=0;
+	publishers0 = this->create_publisher<inertiallabs_msgs::msg::SensorData>("/Inertial_Labs/sensor_data", 1);
+	publishers1 = this->create_publisher<inertiallabs_msgs::msg::InsData>("/Inertial_Labs/ins_data", 1);
+	publishers2 = this->create_publisher<inertiallabs_msgs::msg::GpsData>("/Inertial_Labs/gps_data", 1);
+	publishers3 = this->create_publisher<inertiallabs_msgs::msg::GnssData>("/Inertial_Labs/gnss_data", 1);
+	publishers4 = this->create_publisher<inertiallabs_msgs::msg::MarineData>("/Inertial_Labs/marine_data", 1);
+	// publishers6 = this->create_publisher<TODO>("/imu_raw",1)
+	publishers5 = this->create_publisher<sensor_msgs::msg::Imu>("/imu_raw", 1);
+}
+il_ins::~il_ins() {}
+
+void publish_device(IL::INSDataStruct *data, il_ins *contextPtr)
+{
+	il_ins *context = reinterpret_cast<il_ins *>(contextPtr);
+	static int seq = 0;
 	seq++;
 
 	double g = 9.80655;
@@ -150,8 +151,9 @@ void publish_device(IL::INSDataStruct *data, il_ins* contextPtr)
 		context->publishers4->publish(msg_marine_data);
 	}
 
-	if (context->publishers5->get_subscription_count() > 0){
- 
+	if (context->publishers5->get_subscription_count() > 0)
+	{
+
 		msg_imu.header.stamp = timestamp;
 		msg_imu.header.frame_id = "inertiallabs_imu";
 
@@ -159,13 +161,13 @@ void publish_device(IL::INSDataStruct *data, il_ins* contextPtr)
 		double roll = data->Roll;
 		double pitch = data->Pitch;
 		double yaw = data->Heading;
-		
+
 		// change unit
 		roll = roll / 100.0 * deg_to_rad;
 		pitch = pitch / 100.0 * deg_to_rad;
 		yaw = yaw / 100.0 * deg_to_rad;
 
-		// calculate x y z w 
+		// calculate x y z w
 		double cy = cos(yaw * 0.5);
 		double sy = sin(yaw * 0.5);
 		double cp = cos(pitch * 0.5);
@@ -183,7 +185,7 @@ void publish_device(IL::INSDataStruct *data, il_ins* contextPtr)
 		msg_imu.linear_acceleration.y = data->Acc[1] / 4000.0 * g;
 		msg_imu.linear_acceleration.z = data->Acc[2] / 4000.0 * g;
 
-		// calculate velocity angular 
+		// calculate velocity angular
 		msg_imu.angular_velocity.x = data->Gyro[0] / 50.0 * deg_to_rad;
 		msg_imu.angular_velocity.y = data->Gyro[1] / 50.0 * deg_to_rad;
 		msg_imu.angular_velocity.z = data->Gyro[2] / 50.0 * deg_to_rad;
@@ -192,25 +194,24 @@ void publish_device(IL::INSDataStruct *data, il_ins* contextPtr)
 	}
 }
 
-int main(int argc, char** argv)
+int main(int argc, char **argv)
 {
 	rclcpp::init(argc, argv);
 	auto node = std::make_shared<il_ins>();
 	rclcpp::Rate r(100); // 100 hz
-	
+
 	std::string port = node->declare_parameter<std::string>("ins_url", "serial:/dev/ttyUSB0");
 	IL::Driver ins;
 	int ins_output_format = node->declare_parameter<int>("ins_output_format", 0x52);
 	std::string imu_frame_id;
 
-	RCLCPP_INFO(node->get_logger(),"connecting to INS at URL %s\n",port.c_str());
+	RCLCPP_INFO(node->get_logger(), "connecting to INS at URL %s\n", port.c_str());
 
 	auto il_err = ins.connect(port.c_str());
 	if (il_err != 0)
 	{
-		RCLCPP_FATAL(node->get_logger(),"Could not connect to the INS on this URL %s\n",
-				  port.c_str()
-		);
+		RCLCPP_FATAL(node->get_logger(), "Could not connect to the INS on this URL %s\n",
+					 port.c_str());
 		exit(EXIT_FAILURE);
 	}
 
@@ -221,22 +222,22 @@ int main(int argc, char** argv)
 	auto devInfo = ins.getDeviceInfo();
 	auto devParams = ins.getDeviceParams();
 	std::string SN(reinterpret_cast<const char *>(devInfo.IDN), 8);
-	RCLCPP_INFO(node->get_logger(),"Found INS S/N %s\n", SN.c_str());
-	RCLCPP_INFO(node->get_logger(),"imu frame id is  %s\n", SN.c_str());
+	RCLCPP_INFO(node->get_logger(), "Found INS S/N %s\n", SN.c_str());
+	RCLCPP_INFO(node->get_logger(), "imu frame id is  %s\n", SN.c_str());
 	node->imu_frame_id = SN;
 	il_err = ins.start(ins_output_format);
 	if (il_err != 0)
 	{
-		RCLCPP_FATAL(node->get_logger(),"Could not start the INS: %i\n", il_err);
+		RCLCPP_FATAL(node->get_logger(), "Could not start the INS: %i\n", il_err);
 		ins.disconnect();
 		exit(EXIT_FAILURE);
 	}
 
 	ins.setCallback(&publish_device, node.get());
-	RCLCPP_INFO(node->get_logger(),"publishing at %d Hz\n", devParams.dataRate);
-	RCLCPP_INFO(node->get_logger(),"ros2 topic echo the topics to see the data");
+	RCLCPP_INFO(node->get_logger(), "publishing at %d Hz\n", devParams.dataRate);
+	RCLCPP_INFO(node->get_logger(), "ros2 topic echo the topics to see the data");
 	rclcpp::spin(node);
-	
+
 	std::cout << "Stopping INS... " << std::flush;
 	ins.stop();
 	std::cout << "Disconnecting... " << std::flush;
