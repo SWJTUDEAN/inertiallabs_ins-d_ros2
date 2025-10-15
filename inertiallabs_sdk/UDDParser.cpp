@@ -6,19 +6,13 @@
 
 using namespace std;
 
-namespace IL {
+namespace IL
+{
 
 	UDDParser::UDDParser()
-		: KA(4000)
-		, KG(10)
-		, code(0)
-		, payloadLen(0)
-		, payloadInd(0)
-		, dataSet("")
-		, high_precision_heave(false)
+		: KA(4000), KG(50), code(0), payloadLen(0), payloadInd(0), dataSet(""), high_precision_heave(false)
 	{
 	}
-
 
 	UDDParser::~UDDParser()
 	{
@@ -30,10 +24,13 @@ namespace IL {
 		hdrStream.str("");
 		statusStream.str("");
 		if (payloadLen <= 2)
-			return 1;				// ACK message
+			return 1; // ACK message
 		payloadInd = 0;
 		statusStream << "INS data: ";
-		SA = 1e6; SG = 1e5; SO = 1e3; SV = 1e2;
+		SA = 1e6;
+		SG = 1e5;
+		SO = 1e3;
+		SV = 1e2;
 		switch (code)
 		{
 			using namespace PacketType;
@@ -70,7 +67,8 @@ namespace IL {
 			statusStream << "OPVTHSSHR";
 			dataSet = "\x08\x21\x23\x24\x53\x50\x52\x11\x12\x13\x16\x15\x18\x31"
 					  "\x32\x01\x3c\x36\x3B\x3D\x3A\xF2\xF1\xF7\x25\x41";
-			if (high_precision_heave) {
+			if (high_precision_heave)
+			{
 				dataSet[9] = '\x14';
 				dataSet[10] = '\x17';
 			}
@@ -96,7 +94,7 @@ namespace IL {
 		case IL_UDD:
 			statusStream << "UDD";
 			dataSet.clear();
-			dataSet.append(reinterpret_cast<const char*>(&payloadBuf[1]), payloadBuf[0]);
+			dataSet.append(reinterpret_cast<const char *>(&payloadBuf[1]), payloadBuf[0]);
 			payloadInd = payloadBuf[0] + 1;
 			break;
 		default:
@@ -346,7 +344,7 @@ namespace IL {
 			}
 			if (i < dataSet.size() - 1)
 				hdrStream << "\t";
-			else 
+			else
 				hdrStream << "\n";
 		}
 	}
@@ -355,9 +353,9 @@ namespace IL {
 	{
 		uint8_t IMRdataPresent = 0;
 		bool GPSTimePresent = false;
-		double UTCTOD = 0; 			// UTC Time of Day
-		uint32_t UTCDOW = 0; 		// Day of Week computed from UTC date;
-		static int startOfMonthDaysToAdd[] = { 0, 3, 2, 5, 0, 3, 5, 1, 4, 6, 2, 4 }; 	// To compute day of week
+		double UTCTOD = 0;														   // UTC Time of Day
+		uint32_t UTCDOW = 0;													   // Day of Week computed from UTC date;
+		static int startOfMonthDaysToAdd[] = {0, 3, 2, 5, 0, 3, 5, 1, 4, 6, 2, 4}; // To compute day of week
 		for (int i = 0; i < dataSet.size(); ++i)
 		{
 			switch (static_cast<uint8_t>(dataSet[i]))
@@ -415,7 +413,7 @@ namespace IL {
 				outData.Heave = readScaled<int32_t>(10000.0, false);
 				break;
 			case 0x15:
-				outData.Heave_velocity = readScaled<int16_t>(100.0,false);
+				outData.Heave_velocity = readScaled<int16_t>(100.0, false);
 				break;
 			case 0x16:
 				outData.Surge = readScaled<int16_t>(100.0, true);
@@ -426,8 +424,8 @@ namespace IL {
 				outData.Sway = readScaled<int16_t>(1000.0, false);
 				break;
 			case 0x18:
-				outData.Surge_velocity = readScaled<int16_t>(100.0,true);
-				outData.Sway_velocity = readScaled<int16_t>(100.0,false);
+				outData.Surge_velocity = readScaled<int16_t>(100.0, true);
+				outData.Sway_velocity = readScaled<int16_t>(100.0, false);
 				break;
 			case 0x19:
 				outData.significant_wave_height = readScaled<uint16_t>(100.0, false);

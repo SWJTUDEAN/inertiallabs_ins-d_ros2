@@ -26,7 +26,6 @@ il_ins::il_ins() : Node("il_ins")
 	publishers2 = this->create_publisher<inertiallabs_msgs::msg::GpsData>("/Inertial_Labs/gps_data", 1);
 	publishers3 = this->create_publisher<inertiallabs_msgs::msg::GnssData>("/Inertial_Labs/gnss_data", 1);
 	publishers4 = this->create_publisher<inertiallabs_msgs::msg::MarineData>("/Inertial_Labs/marine_data", 1);
-	// publishers6 = this->create_publisher<TODO>("/imu_raw",1)
 	publishers5 = this->create_publisher<sensor_msgs::msg::Imu>("/imu_raw", 1);
 }
 il_ins::~il_ins() {}
